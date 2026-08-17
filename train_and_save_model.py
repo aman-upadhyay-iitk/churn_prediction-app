@@ -1,10 +1,11 @@
 """
-train_and_save_model.py
-------------------------
-Trains the churn prediction pipeline (same as analysis.py) and saves it
-as a .pkl file that the Streamlit app loads for live predictions.
+train_and_save_model.py  (REAL DATA VERSION)
+----------------------------------------------
+Trains the churn prediction model on the REAL Kaggle "Telco Customer
+Churn" dataset (renamed here to telco_churn_real.csv) and saves it as
+churn_model.pkl for the Streamlit app.
 
-Run this once (or whenever you re-run analysis.py with new/real data):
+Run:
     python3 train_and_save_model.py
 """
 
@@ -17,14 +18,23 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestClassifier
 
-df = pd.read_csv("telco_churn.csv")
+df = pd.read_csv("telco_churn_real.csv")
 
-features_num = ["tenure_months", "monthly_charges", "total_charges", "num_support_tickets"]
-features_cat = ["contract", "internet_service", "payment_method", "tech_support",
-                 "online_security", "partner", "paperless_billing"]
+# TotalCharges has some blank strings in the real dataset -> convert & fill
+df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce")
+df["TotalCharges"] = df["TotalCharges"].fillna(df["MonthlyCharges"])
+
+df["Churn"] = df["Churn"].map({"Yes": 1, "No": 0})
+
+features_num = ["tenure", "MonthlyCharges", "TotalCharges"]
+features_cat = ["Contract", "InternetService", "PaymentMethod", "TechSupport",
+                 "OnlineSecurity", "Partner", "PaperlessBilling",
+                 "SeniorCitizen", "Dependents", "MultipleLines",
+                 "OnlineBackup", "DeviceProtection", "StreamingTV",
+                 "StreamingMovies", "PhoneService", "gender"]
 
 X = df[features_num + features_cat]
-y = df["churn"]
+y = df["Churn"]
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,
                                                       random_state=42, stratify=y)
@@ -43,4 +53,4 @@ with open("churn_model.pkl", "wb") as f:
     pickle.dump(pipe, f)
 
 acc = pipe.score(X_test, y_test)
-print(f"Model trained and saved -> churn_model.pkl (test accuracy: {acc:.3f})")
+print(f"Model trained on REAL data ({len(df)} customers) -> churn_model.pkl (test accuracy: {acc:.3f})")

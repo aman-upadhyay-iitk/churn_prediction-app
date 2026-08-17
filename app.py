@@ -1,19 +1,12 @@
 """
-app.py
-------
-Streamlit app: Customer Churn Prediction — live demo.
-Enter a customer's details and get an instant churn risk prediction.
+app.py  (REAL DATA VERSION)
+----------------------------
+Streamlit app: Customer Churn Prediction — live demo, trained on the
+real Kaggle "Telco Customer Churn" dataset (7,043 customers).
 
 Run locally:
     pip install streamlit pandas scikit-learn
     streamlit run app.py
-
-Deploy for free (so you get a shareable link for your resume):
-    1. Push this whole folder to a public GitHub repo
-    2. Go to https://share.streamlit.io -> "New app"
-    3. Connect your GitHub repo, set main file = app.py
-    4. Deploy -> you'll get a URL like https://your-app.streamlit.app
-    5. Put that URL on your resume next to this project
 """
 
 import pickle
@@ -25,8 +18,8 @@ st.set_page_config(page_title="Churn Prediction Demo", page_icon="📉", layout=
 st.title("📉 Customer Churn Prediction")
 st.write(
     "Enter a telecom customer's details below to predict their likelihood "
-    "of churning, using a Random Forest model trained on customer usage "
-    "and billing data."
+    "of churning, using a Random Forest model trained on the real Kaggle "
+    "**Telco Customer Churn** dataset (7,043 customers)."
 )
 
 @st.cache_resource
@@ -45,36 +38,52 @@ st.subheader("Customer Details")
 col1, col2 = st.columns(2)
 
 with col1:
-    tenure_months = st.slider("Tenure (months)", 0, 72, 12)
-    monthly_charges = st.number_input("Monthly Charges ($)", 18.0, 150.0, 65.0)
-    total_charges = st.number_input("Total Charges ($)", 0.0, 10000.0,
-                                     float(round(monthly_charges * max(tenure_months, 1), 2)))
-    num_support_tickets = st.slider("Support Tickets (last year)", 0, 10, 1)
-    contract = st.selectbox("Contract Type", ["Month-to-month", "One year", "Two year"])
-    internet_service = st.selectbox("Internet Service", ["DSL", "Fiber optic", "No"])
-
-with col2:
-    payment_method = st.selectbox("Payment Method", [
+    tenure = st.slider("Tenure (months)", 0, 72, 12)
+    MonthlyCharges = st.number_input("Monthly Charges ($)", 18.0, 120.0, 65.0)
+    TotalCharges = st.number_input("Total Charges ($)", 0.0, 10000.0,
+                                    float(round(MonthlyCharges * max(tenure, 1), 2)))
+    Contract = st.selectbox("Contract Type", ["Month-to-month", "One year", "Two year"])
+    InternetService = st.selectbox("Internet Service", ["DSL", "Fiber optic", "No"])
+    PaymentMethod = st.selectbox("Payment Method", [
         "Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"
     ])
-    tech_support = st.selectbox("Tech Support", ["Yes", "No"])
-    online_security = st.selectbox("Online Security", ["Yes", "No"])
-    partner = st.selectbox("Has Partner", ["Yes", "No"])
-    paperless_billing = st.selectbox("Paperless Billing", ["Yes", "No"])
+    gender = st.selectbox("Gender", ["Male", "Female"])
+    SeniorCitizen = st.selectbox("Senior Citizen", ["No", "Yes"])
+
+with col2:
+    TechSupport = st.selectbox("Tech Support", ["Yes", "No", "No internet service"])
+    OnlineSecurity = st.selectbox("Online Security", ["Yes", "No", "No internet service"])
+    OnlineBackup = st.selectbox("Online Backup", ["Yes", "No", "No internet service"])
+    DeviceProtection = st.selectbox("Device Protection", ["Yes", "No", "No internet service"])
+    StreamingTV = st.selectbox("Streaming TV", ["Yes", "No", "No internet service"])
+    StreamingMovies = st.selectbox("Streaming Movies", ["Yes", "No", "No internet service"])
+    PhoneService = st.selectbox("Phone Service", ["Yes", "No"])
+    MultipleLines = st.selectbox("Multiple Lines", ["Yes", "No", "No phone service"])
+    Partner = st.selectbox("Has Partner", ["Yes", "No"])
+    Dependents = st.selectbox("Has Dependents", ["Yes", "No"])
+    PaperlessBilling = st.selectbox("Paperless Billing", ["Yes", "No"])
 
 if st.button("Predict Churn Risk", type="primary"):
     input_df = pd.DataFrame([{
-        "tenure_months": tenure_months,
-        "monthly_charges": monthly_charges,
-        "total_charges": total_charges,
-        "num_support_tickets": num_support_tickets,
-        "contract": contract,
-        "internet_service": internet_service,
-        "payment_method": payment_method,
-        "tech_support": tech_support,
-        "online_security": online_security,
-        "partner": partner,
-        "paperless_billing": paperless_billing
+        "tenure": tenure,
+        "MonthlyCharges": MonthlyCharges,
+        "TotalCharges": TotalCharges,
+        "Contract": Contract,
+        "InternetService": InternetService,
+        "PaymentMethod": PaymentMethod,
+        "TechSupport": TechSupport,
+        "OnlineSecurity": OnlineSecurity,
+        "Partner": Partner,
+        "PaperlessBilling": PaperlessBilling,
+        "SeniorCitizen": 1 if SeniorCitizen == "Yes" else 0,
+        "Dependents": Dependents,
+        "MultipleLines": MultipleLines,
+        "OnlineBackup": OnlineBackup,
+        "DeviceProtection": DeviceProtection,
+        "StreamingTV": StreamingTV,
+        "StreamingMovies": StreamingMovies,
+        "PhoneService": PhoneService,
+        "gender": gender
     }])
 
     prob = model.predict_proba(input_df)[0][1]
@@ -92,16 +101,16 @@ if st.button("Predict Churn Risk", type="primary"):
 
     with st.expander("Why this prediction? (key risk factors)"):
         notes = []
-        if contract == "Month-to-month":
+        if Contract == "Month-to-month":
             notes.append("Month-to-month contracts have the highest churn rate.")
-        if tenure_months < 12:
+        if tenure < 12:
             notes.append("Low tenure customers are historically higher risk.")
-        if payment_method == "Electronic check":
+        if PaymentMethod == "Electronic check":
             notes.append("Electronic check payers show elevated churn in this dataset.")
-        if tech_support == "No" or online_security == "No":
+        if TechSupport == "No" or OnlineSecurity == "No":
             notes.append("Lack of tech support / online security correlates with higher churn.")
-        if num_support_tickets >= 3:
-            notes.append("Multiple support tickets suggest dissatisfaction.")
+        if InternetService == "Fiber optic":
+            notes.append("Fiber optic customers show higher churn than DSL customers.")
         if not notes:
             notes.append("This customer's profile matches historically low-risk patterns.")
         for n in notes:
@@ -109,7 +118,8 @@ if st.button("Predict Churn Risk", type="primary"):
 
 st.divider()
 st.caption(
-    "Model: Random Forest Classifier trained on telecom customer data. "
-    "Built as a portfolio project — see the GitHub repo for the full "
-    "analysis pipeline (EDA, model comparison, SQL queries)."
+    "Model: Random Forest Classifier trained on the real Kaggle Telco "
+    "Customer Churn dataset. Built as a portfolio project — see the "
+    "GitHub repo for the full analysis pipeline (EDA, model comparison, "
+    "SQL queries)."
 )
