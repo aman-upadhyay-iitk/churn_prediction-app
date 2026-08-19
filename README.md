@@ -80,3 +80,6 @@ churn_project/
     ├── model_metrics.md               (classification reports for both models)
     └── charts/                        (5 PNG visuals incl. ROC curve, confusion matrix)
 ```
+
+## SQL & Financial Analysis
+Includes standalone SQL queries (`churn_queries.sql`) and a business impact analysis (`financial_impact.py`) calculating revenue at risk and retention campaign ROI.
