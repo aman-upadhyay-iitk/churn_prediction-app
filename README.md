@@ -82,4 +82,4 @@ churn_project/
 ```
 
 ## SQL & Financial Analysis
-Includes standalone SQL queries (`churn_queries.sql`) and a business impact analysis (`financial_impact.py`) calculating revenue at risk and retention campaign ROI.
+Includes standalone SQL queries (`churn_queries.sql`) and a business impact analysis (`churn_financial_impact.py`) calculating revenue at risk and retention campaign ROI.
